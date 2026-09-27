@@ -34,6 +34,7 @@
         "overlay_benefit_3": {
           "type": "overlay_benefit",
           "settings": {
+            "icon": "shopify://shop_images/Ellipse_94.jpg",
             "text": "Calmer mood and less stress"
           }
         },
@@ -64,13 +65,15 @@
         "benefit_5": {
           "type": "benefit",
           "settings": {
-            "text": "Less joint pain"
+            "icon": "shopify://shop_images/Group.svg",
+            "text": "Fall asleep faster and wake up fully rested"
           }
         },
         "benefit_6": {
           "type": "benefit",
           "settings": {
-            "text": "Calmer mood"
+            "icon": "shopify://shop_images/Group.svg",
+            "text": "Fall asleep faster and wake up fully rested"
           }
         },
         "tab_description": {
