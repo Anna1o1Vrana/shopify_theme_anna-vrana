@@ -1,0 +1,120 @@
+{
+  "sections": {
+    "main": {
+      "type": "product-assignment-hero",
+      "blocks": {
+        "buy_buttons": {
+          "type": "buy_buttons",
+          "settings": {
+            "show_dynamic_checkout": false,
+            "show_gift_card_recipient": false
+          }
+        },
+        "overlay_benefit_1": {
+          "type": "overlay_benefit",
+          "settings": {
+            "text": "Fall asleep faster and stay asleep longer"
+          }
+        },
+        "overlay_benefit_2": {
+          "type": "overlay_benefit",
+          "settings": {
+            "text": "Less joint pain and muscle tension"
+          }
+        },
+        "overlay_benefit_3": {
+          "type": "overlay_benefit",
+          "settings": {
+            "text": "Calmer mood and less stress"
+          }
+        },
+        "benefit_1": {
+          "type": "benefit",
+          "settings": {
+            "text": "Machine washable"
+          }
+        },
+        "benefit_2": {
+          "type": "benefit",
+          "settings": {
+            "text": "400 TC organic cotton"
+          }
+        },
+        "benefit_3": {
+          "type": "benefit",
+          "settings": {
+            "text": "Grounding technology"
+          }
+        },
+        "benefit_4": {
+          "type": "benefit",
+          "settings": {
+            "text": "Fall asleep faster"
+          }
+        },
+        "benefit_5": {
+          "type": "benefit",
+          "settings": {
+            "text": "Less joint pain"
+          }
+        },
+        "benefit_6": {
+          "type": "benefit",
+          "settings": {
+            "text": "Calmer mood"
+          }
+        },
+        "tab_description": {
+          "type": "detail_tab",
+          "settings": {
+            "heading": "Description",
+            "use_product_description": true
+          }
+        },
+        "tab_who": {
+          "type": "detail_tab",
+          "settings": {
+            "heading": "Who is it for?"
+          }
+        },
+        "tab_shipping": {
+          "type": "detail_tab",
+          "settings": {
+            "heading": "Shipping and returns"
+          }
+        },
+        "tab_care": {
+          "type": "detail_tab",
+          "settings": {
+            "heading": "Care Instructions"
+          }
+        }
+      },
+      "block_order": [
+        "buy_buttons",
+        "overlay_benefit_1",
+        "overlay_benefit_2",
+        "overlay_benefit_3",
+        "benefit_1",
+        "benefit_2",
+        "benefit_3",
+        "benefit_4",
+        "benefit_5",
+        "benefit_6",
+        "tab_description",
+        "tab_who",
+        "tab_shipping",
+        "tab_care"
+      ],
+      "settings": {
+        "limited_stock_label": "Limited Stock",
+        "viewing_label": "23 people viewing this now",
+        "benefits_heading": "Why you need this?",
+        "social_proof_heading": "Real People. Real Healing.",
+        "padding_top": 48,
+        "padding_bottom": 48
+      }
+    }
+  },
+  "order": ["main"]
+}
