@@ -1,3 +1,12 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
 {
   "sections": {
     "main": {
@@ -68,25 +77,36 @@
           "type": "detail_tab",
           "settings": {
             "heading": "Description",
-            "use_product_description": true
+            "use_product_description": true,
+            "content": "",
+            "page": ""
           }
         },
         "tab_who": {
           "type": "detail_tab",
           "settings": {
-            "heading": "Who is it for?"
+            "heading": "Who is it for?",
+            "use_product_description": false,
+            "content": "",
+            "page": ""
           }
         },
         "tab_shipping": {
           "type": "detail_tab",
           "settings": {
-            "heading": "Shipping and returns"
+            "heading": "Shipping and returns",
+            "use_product_description": false,
+            "content": "",
+            "page": ""
           }
         },
         "tab_care": {
           "type": "detail_tab",
           "settings": {
-            "heading": "Care Instructions"
+            "heading": "Care Instructions",
+            "use_product_description": false,
+            "content": "<p>dsfsdfsdfs. rgfdgd gdfg rdgfgdfg</p>",
+            "page": ""
           }
         }
       },
@@ -107,8 +127,13 @@
         "tab_care"
       ],
       "settings": {
+        "summary": "",
+        "show_limited_stock_badge": true,
         "limited_stock_label": "Limited Stock",
+        "show_viewing_badge": true,
         "viewing_label": "23 people viewing this now",
+        "savings_badge_prefix": "Save",
+        "savings_badge_suffix": "% OFF",
         "benefits_heading": "Why you need this?",
         "social_proof_heading": "Real People. Real Healing.",
         "padding_top": 48,
@@ -116,5 +141,7 @@
       }
     }
   },
-  "order": ["main"]
+  "order": [
+    "main"
+  ]
 }
