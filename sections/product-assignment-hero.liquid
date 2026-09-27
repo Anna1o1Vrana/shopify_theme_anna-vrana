@@ -1,0 +1,669 @@
+{{ 'section-product-assignment-hero.css' | asset_url | stylesheet_tag }}
+{{ 'component-loading-overlay.css' | asset_url | stylesheet_tag }}
+{{ 'component-accordion.css' | asset_url | stylesheet_tag }}
+{{ 'component-slider.css' | asset_url | stylesheet_tag }}
+
+{%- style -%}
+  .section-{{ section.id }}-padding {
+    padding-top: {{ section.settings.padding_top | times: 0.75 | round: 0 }}px;
+    padding-bottom: {{ section.settings.padding_bottom | times: 0.75 | round: 0 }}px;
+  }
+
+  @media screen and (min-width: 750px) {
+    .section-{{ section.id }}-padding {
+      padding-top: {{ section.settings.padding_top }}px;
+      padding-bottom: {{ section.settings.padding_bottom }}px;
+    }
+  }
+{%- endstyle -%}
+
+<script src="{{ 'product-form.js' | asset_url }}" defer="defer" type="module"></script>
+<script src="{{ 'product-assignment-hero.js' | asset_url }}" defer="defer"></script>
+
+{%- liquid
+  assign product_form_id = 'product-form-' | append: section.id
+  assign buy_buttons_block = section.blocks | where: 'type', 'buy_buttons' | first
+  assign variant_picker_block = section.blocks | where: 'type', 'variant_picker' | first
+  assign overlay_benefits = section.blocks | where: 'type', 'overlay_benefit'
+  assign benefits = section.blocks | where: 'type', 'benefit'
+  assign detail_tabs = section.blocks | where: 'type', 'detail_tab'
+  assign testimonial_avatars = section.blocks | where: 'type', 'testimonial_avatar'
+
+  assign featured_media = product.selected_or_first_available_variant.featured_media | default: product.featured_media
+  if featured_media == blank and product.media.size > 0
+    assign featured_media = product.media.first
+  endif
+
+  assign current_variant = product.selected_or_first_available_variant
+  assign compare_at_price = current_variant.compare_at_price
+  assign current_price = current_variant.price
+
+  if section.settings.summary != blank
+    assign summary_text = section.settings.summary
+  elsif product.description != blank
+    assign summary_text = product.description | strip_html | truncate: 220
+  else
+    assign summary_text = ''
+  endif
+-%}
+
+<section
+  id="ProductAssignment-{{ section.id }}"
+  class="pdp-hero section-{{ section.id }}-padding"
+  data-section="{{ section.id }}"
+>
+  <div class="pdp-hero__inner" data-pdp-hero>
+    <div class="pdp-hero__grid">
+      <div class="pdp-hero__media">
+        {%- comment -%} Desktop: main image + grid {%- endcomment -%}
+        <div class="pdp-hero__gallery-desktop">
+          <div class="pdp-hero__gallery-main-wrap">
+            <div class="pdp-hero__gallery-main" data-pdp-main-media>
+              {%- if featured_media -%}
+                {%- assign main_image = featured_media.preview_image | default: featured_media -%}
+                {{
+                  main_image
+                  | image_url: width: 1500
+                  | image_tag:
+                    loading: 'eager',
+                    widths: '375, 550, 750, 1100, 1500',
+                    sizes: '(min-width: 990px) 50vw, 100vw',
+                    class: 'pdp-hero__main-image',
+                    alt: main_image.alt | escape
+                }}
+              {%- else -%}
+                <div class="pdp-hero__gallery-placeholder">
+                  {{ 'product-apparel-2' | placeholder_svg_tag: 'placeholder-svg' }}
+                </div>
+              {%- endif -%}
+            </div>
+
+            {%- if overlay_benefits.size > 0 -%}
+              <div class="pdp-hero__overlay-bar">
+                {%- for block in overlay_benefits -%}
+                  <div class="pdp-hero__overlay-item" {{ block.shopify_attributes }}>
+                    {%- if block.settings.icon != blank -%}
+                      {{
+                        block.settings.icon
+                        | image_url: width: 40
+                        | image_tag: class: 'pdp-hero__overlay-icon', loading: 'lazy', alt: ''
+                      }}
+                    {%- endif -%}
+                    <span>{{ block.settings.text | escape }}</span>
+                  </div>
+                {%- endfor -%}
+              </div>
+            {%- endif -%}
+          </div>
+
+          {%- if product.media.size > 1 -%}
+            <div class="pdp-hero__gallery-grid">
+              {%- for media in product.media limit: 6 -%}
+                {%- assign thumb_image = media.preview_image | default: media -%}
+                {%- capture thumb_srcset -%}
+                  {%- for width in '165,360,535,750' -%}
+                    {%- assign width_int = width | plus: 0 -%}
+                    {{ thumb_image | image_url: width: width_int }} {{ width_int }}w{%- unless forloop.last -%},{%- endunless -%}
+                  {%- endfor -%}
+                {%- endcapture -%}
+                <button
+                  type="button"
+                  class="pdp-hero__grid-item{% if media.id == featured_media.id %} pdp-hero__grid-item--active{% endif %}"
+                  data-pdp-thumb
+                  data-media-id="{{ media.id }}"
+                  data-src="{{ thumb_image | image_url: width: 1500 }}"
+                  data-srcset="{{ thumb_srcset }}"
+                  data-alt="{{ thumb_image.alt | escape }}"
+                  aria-label="Show image {{ forloop.index }}"
+                  aria-current="{% if media.id == featured_media.id %}true{% else %}false{% endif %}"
+                >
+                  {{
+                    thumb_image
+                    | image_url: width: 400
+                    | image_tag: loading: 'lazy', widths: '165, 360, 400', sizes: '200px', alt: thumb_image.alt
+                  }}
+                </button>
+              {%- endfor -%}
+            </div>
+          {%- endif -%}
+        </div>
+
+        {%- comment -%} Mobile: Dawn slider-component carousel (touch swipe + prev/next) {%- endcomment -%}
+        {%- if product.media.size > 0 -%}
+          <div class="pdp-hero__mobile-slider product__media-wrapper">
+            <slider-component id="GalleryViewer-PdpHero-{{ section.id }}" class="slider-mobile-gutter">
+              <ul
+                id="Slider-Gallery-PdpHero-{{ section.id }}"
+                class="product__media-list contains-media contains-content-container grid grid--peek grid--1-col-tablet-down list-unstyled slider slider--mobile"
+                role="list"
+              >
+                {%- for media in product.media -%}
+                  {%- assign slide_image = media.preview_image | default: media -%}
+                  {%- if forloop.first -%}
+                    {%- assign slide_loading = 'eager' -%}
+                  {%- else -%}
+                    {%- assign slide_loading = 'lazy' -%}
+                  {%- endif -%}
+                  <li
+                    id="Slide-PdpHero-{{ section.id }}-{{ media.id }}"
+                    class="product__media-item grid__item slider__slide{% if forloop.first %} is-active{% endif %}"
+                    data-media-id="{{ section.id }}-{{ media.id }}"
+                  >
+                    <div class="pdp-hero__mobile-slide-inner">
+                      <div class="pdp-hero__gallery-main">
+                        {{
+                          slide_image
+                          | image_url: width: 900
+                          | image_tag:
+                            loading: slide_loading,
+                            widths: '375, 550, 750, 900',
+                            sizes: '100vw',
+                            alt: slide_image.alt | escape
+                        }}
+                      </div>
+                      {%- if forloop.first and overlay_benefits.size > 0 -%}
+                        <div class="pdp-hero__overlay-bar">
+                          {%- for block in overlay_benefits -%}
+                            <div class="pdp-hero__overlay-item" {{ block.shopify_attributes }}>
+                              {%- if block.settings.icon != blank -%}
+                                {{
+                                  block.settings.icon
+                                  | image_url: width: 40
+                                  | image_tag: class: 'pdp-hero__overlay-icon', loading: 'lazy', alt: ''
+                                }}
+                              {%- endif -%}
+                              <span>{{ block.settings.text | escape }}</span>
+                            </div>
+                          {%- endfor -%}
+                        </div>
+                      {%- endif -%}
+                    </div>
+                  </li>
+                {%- endfor -%}
+              </ul>
+              {%- if product.media.size > 1 -%}
+                <div class="slider-buttons no-js-hidden">
+                  <button
+                    type="button"
+                    class="slider-button slider-button--prev"
+                    name="previous"
+                    aria-label="{{ 'general.slider.previous_slide' | t }}"
+                  >
+                    {% render 'icon-caret' %}
+                  </button>
+                  <div class="slider-counter caption">
+                    <span class="slider-counter--current">1</span>
+                    <span aria-hidden="true"> / </span>
+                    <span class="visually-hidden">{{ 'general.slider.of' | t }}</span>
+                    <span class="slider-counter--total">{{ product.media.size }}</span>
+                  </div>
+                  <button
+                    type="button"
+                    class="slider-button slider-button--next"
+                    name="next"
+                    aria-label="{{ 'general.slider.next_slide' | t }}"
+                  >
+                    {% render 'icon-caret' %}
+                  </button>
+                </div>
+              {%- endif -%}
+            </slider-component>
+          </div>
+        {%- else -%}
+          <div class="pdp-hero__gallery-main">
+            <div class="pdp-hero__gallery-placeholder">
+              {{ 'product-apparel-2' | placeholder_svg_tag: 'placeholder-svg' }}
+            </div>
+          </div>
+        {%- endif -%}
+      </div>
+
+      <div class="pdp-hero__info">
+        <h1 class="pdp-hero__title">{{ product.title | escape }}</h1>
+
+        {%- if section.settings.show_limited_stock_badge or section.settings.show_viewing_badge -%}
+          <div class="pdp-hero__badges">
+            {%- if section.settings.show_limited_stock_badge and section.settings.limited_stock_label != blank -%}
+              <span class="pdp-hero__badge pdp-hero__badge--stock">
+                <span class="pdp-hero__badge-dot pdp-hero__badge-dot--stock" aria-hidden="true"></span>
+                {{ section.settings.limited_stock_label | escape }}
+              </span>
+            {%- endif -%}
+            {%- if section.settings.show_viewing_badge and section.settings.viewing_label != blank -%}
+              <span class="pdp-hero__badge pdp-hero__badge--viewing">
+                <span class="pdp-hero__badge-dot pdp-hero__badge-dot--viewing" aria-hidden="true"></span>
+                {{ section.settings.viewing_label | escape }}
+              </span>
+            {%- endif -%}
+          </div>
+        {%- endif -%}
+
+        {%- if summary_text != blank -%}
+          <p class="pdp-hero__summary">{{ summary_text | escape }}</p>
+        {%- endif -%}
+
+        {%- if variant_picker_block != nil and product.has_only_default_variant == false -%}
+          <div class="pdp-hero__variant-picker">
+            {% render 'product-variant-picker',
+              product: product,
+              block: variant_picker_block,
+              product_form_id: product_form_id
+            %}
+          </div>
+        {%- endif -%}
+
+        <div class="pdp-hero__pricing no-js-hidden" id="price-{{ section.id }}" role="status">
+          {%- liquid
+            assign money_price = current_price | money
+            if settings.currency_code_enabled
+              assign money_price = current_price | money_with_currency
+            endif
+
+            assign money_compare = compare_at_price | money
+            if settings.currency_code_enabled
+              assign money_compare = compare_at_price | money_with_currency
+            endif
+
+            assign savings_percent = 0
+            if compare_at_price > current_price and compare_at_price > 0
+              assign price_diff = compare_at_price | minus: current_price
+              assign savings_percent = price_diff | times: 100 | divided_by: compare_at_price
+            endif
+          -%}
+
+          {%- if compare_at_price > current_price -%}
+            <span class="visually-hidden">{{ 'products.product.price.regular_price' | t }}</span>
+            <span class="pdp-hero__price-compare">{{ money_compare }}</span>
+          {%- endif -%}
+
+          <span class="visually-hidden">
+            {%- if compare_at_price > current_price -%}
+              {{ 'products.product.price.sale_price' | t }}
+            {%- else -%}
+              {{ 'products.product.price.regular_price' | t }}
+            {%- endif -%}
+          </span>
+          <span class="pdp-hero__price-current">{{ money_price }}</span>
+
+          {%- if savings_percent > 0 -%}
+            <span class="pdp-hero__price-savings">
+              {{ section.settings.savings_badge_prefix | escape -}}
+              {{- savings_percent -}}
+              {{- section.settings.savings_badge_suffix | escape }}
+            </span>
+          {%- endif -%}
+        </div>
+
+        {%- if benefits.size > 0 -%}
+          <div class="pdp-hero__benefits">
+            {%- if section.settings.benefits_heading != blank -%}
+              <h2 class="pdp-hero__benefits-heading">{{ section.settings.benefits_heading | escape }}</h2>
+            {%- endif -%}
+            <ul class="pdp-hero__benefits-grid">
+              {%- for block in benefits -%}
+                <li class="pdp-hero__benefit-item" {{ block.shopify_attributes }}>
+                  {%- if block.settings.icon != blank -%}
+                    {{
+                      block.settings.icon
+                      | image_url: width: 48
+                      | image_tag: class: 'pdp-hero__benefit-icon', loading: 'lazy', alt: ''
+                    }}
+                  {%- else -%}
+                    <span class="pdp-hero__benefit-icon-placeholder" aria-hidden="true"></span>
+                  {%- endif -%}
+                  <span>{{ block.settings.text | escape }}</span>
+                </li>
+              {%- endfor -%}
+            </ul>
+          </div>
+        {%- endif -%}
+
+        {%- if buy_buttons_block != nil -%}
+          <div class="pdp-hero__cta">
+            {% render 'buy-buttons',
+              block: buy_buttons_block,
+              product: product,
+              product_form_id: product_form_id,
+              section_id: section.id,
+              show_pickup_availability: false
+            %}
+          </div>
+        {%- endif -%}
+
+        {%- if section.settings.social_proof_heading != blank or testimonial_avatars.size > 0 -%}
+          <div class="pdp-hero__social">
+            {%- if section.settings.social_proof_heading != blank -%}
+              <h2 class="pdp-hero__social-heading">{{ section.settings.social_proof_heading | escape }}</h2>
+            {%- endif -%}
+            {%- if testimonial_avatars.size > 0 -%}
+              <ul class="pdp-hero__avatars">
+                {%- for block in testimonial_avatars -%}
+                  <li class="pdp-hero__avatar" {{ block.shopify_attributes }}>
+                    {%- if block.settings.image != blank -%}
+                      {{
+                        block.settings.image
+                        | image_url: width: 96
+                        | image_tag: loading: 'lazy', widths: '48, 96', sizes: '48px', alt: block.settings.image.alt
+                      }}
+                    {%- else -%}
+                      {{ 'image' | placeholder_svg_tag: 'placeholder-svg' }}
+                    {%- endif -%}
+                  </li>
+                {%- endfor -%}
+              </ul>
+            {%- endif -%}
+          </div>
+        {%- endif -%}
+
+        {%- if detail_tabs.size > 0 -%}
+          <div class="pdp-hero__details">
+            <div class="pdp-hero__details-tabs">
+              <ul class="pdp-hero__tab-list" role="tablist" data-pdp-tabs>
+                {%- for block in detail_tabs -%}
+                  <li role="presentation">
+                    <button
+                      type="button"
+                      class="pdp-hero__tab{% if forloop.first %} pdp-hero__tab--active{% endif %}"
+                      id="PdpTab-{{ block.id }}-{{ section.id }}"
+                      data-pdp-tab
+                      role="tab"
+                      aria-selected="{% if forloop.first %}true{% else %}false{% endif %}"
+                      aria-controls="PdpPanel-{{ block.id }}-{{ section.id }}"
+                      tabindex="{% if forloop.first %}0{% else %}-1{% endif %}"
+                    >
+                      {{ block.settings.heading | default: block.settings.page.title | escape }}
+                    </button>
+                  </li>
+                {%- endfor -%}
+              </ul>
+
+              {%- for block in detail_tabs -%}
+                {%- liquid
+                  assign tab_content = block.settings.content
+                  if block.settings.use_product_description and product.description != blank
+                    assign tab_content = product.description
+                  elsif block.settings.page.content != blank
+                    assign tab_content = block.settings.page.content
+                  endif
+                -%}
+                <div
+                  id="PdpPanel-{{ block.id }}-{{ section.id }}"
+                  class="pdp-hero__tab-panel rte{% if forloop.first %} pdp-hero__tab-panel--active{% endif %}"
+                  data-pdp-panel
+                  role="tabpanel"
+                  aria-labelledby="PdpTab-{{ block.id }}-{{ section.id }}"
+                  {% unless forloop.first %}hidden{% endunless %}
+                  {{ block.shopify_attributes }}
+                >
+                  {{ tab_content }}
+                </div>
+              {%- endfor -%}
+            </div>
+
+            <div class="pdp-hero__details-accordions">
+              {%- for block in detail_tabs -%}
+                {%- liquid
+                  assign tab_content = block.settings.content
+                  if block.settings.use_product_description and product.description != blank
+                    assign tab_content = product.description
+                  elsif block.settings.page.content != blank
+                    assign tab_content = block.settings.page.content
+                  endif
+                -%}
+                <details
+                  class="pdp-hero__accordion"
+                  id="PdpAccordion-{{ block.id }}-{{ section.id }}"
+                  {% if forloop.first %}open{% endif %}
+                  {{ block.shopify_attributes }}
+                >
+                  <summary>
+                    <h3 class="pdp-hero__accordion-title">
+                      {{ block.settings.heading | default: block.settings.page.title | escape }}
+                    </h3>
+                    <span class="pdp-hero__accordion-icon pdp-hero__accordion-icon--plus" aria-hidden="true">
+                      {% render 'icon-plus' %}
+                    </span>
+                    <span class="pdp-hero__accordion-icon pdp-hero__accordion-icon--minus" aria-hidden="true">
+                      {% render 'icon-minus' %}
+                    </span>
+                  </summary>
+                  <div class="pdp-hero__accordion-content rte">
+                    {{ tab_content }}
+                  </div>
+                </details>
+              {%- endfor -%}
+            </div>
+          </div>
+        {%- endif -%}
+      </div>
+    </div>
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Product assignment hero",
+  "tag": "section",
+  "class": "section",
+  "settings": [
+    {
+      "type": "textarea",
+      "id": "summary",
+      "label": "Product summary",
+      "info": "Short text below the title. Leave blank to use a truncated product description."
+    },
+    {
+      "type": "header",
+      "content": "Status badges"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_limited_stock_badge",
+      "label": "Show limited stock badge",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "limited_stock_label",
+      "label": "Limited stock label",
+      "default": "Limited Stock"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_viewing_badge",
+      "label": "Show viewing badge",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "viewing_label",
+      "label": "Viewing badge label",
+      "default": "23 people viewing this now"
+    },
+    {
+      "type": "header",
+      "content": "Pricing"
+    },
+    {
+      "type": "text",
+      "id": "savings_badge_prefix",
+      "label": "Savings badge prefix",
+      "default": "Save "
+    },
+    {
+      "type": "text",
+      "id": "savings_badge_suffix",
+      "label": "Savings badge suffix",
+      "default": "% OFF"
+    },
+    {
+      "type": "header",
+      "content": "Benefits"
+    },
+    {
+      "type": "text",
+      "id": "benefits_heading",
+      "label": "Benefits heading",
+      "default": "Why you need this?"
+    },
+    {
+      "type": "header",
+      "content": "Social proof"
+    },
+    {
+      "type": "text",
+      "id": "social_proof_heading",
+      "label": "Social proof heading",
+      "default": "Real People. Real Healing."
+    },
+    {
+      "type": "header",
+      "content": "Section padding"
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "Top padding",
+      "default": 48
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "Bottom padding",
+      "default": 48
+    }
+  ],
+  "blocks": [
+    {
+      "type": "buy_buttons",
+      "name": "Buy buttons",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "checkbox",
+          "id": "show_dynamic_checkout",
+          "default": false,
+          "label": "Show dynamic checkout buttons"
+        },
+        {
+          "type": "checkbox",
+          "id": "show_gift_card_recipient",
+          "default": false,
+          "label": "Show gift card recipient form"
+        }
+      ]
+    },
+    {
+      "type": "variant_picker",
+      "name": "Variant picker",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "select",
+          "id": "picker_type",
+          "options": [
+            {
+              "value": "dropdown",
+              "label": "Dropdown"
+            },
+            {
+              "value": "button",
+              "label": "Buttons"
+            }
+          ],
+          "default": "button",
+          "label": "Type"
+        }
+      ]
+    },
+    {
+      "type": "overlay_benefit",
+      "name": "Gallery overlay benefit",
+      "limit": 3,
+      "settings": [
+        {
+          "type": "image_picker",
+          "id": "icon",
+          "label": "Icon"
+        },
+        {
+          "type": "text",
+          "id": "text",
+          "label": "Text",
+          "default": "Benefit text"
+        }
+      ]
+    },
+    {
+      "type": "benefit",
+      "name": "Benefit",
+      "limit": 6,
+      "settings": [
+        {
+          "type": "image_picker",
+          "id": "icon",
+          "label": "Icon"
+        },
+        {
+          "type": "text",
+          "id": "text",
+          "label": "Text",
+          "default": "Benefit text"
+        }
+      ]
+    },
+    {
+      "type": "testimonial_avatar",
+      "name": "Testimonial avatar",
+      "settings": [
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "Avatar image"
+        }
+      ]
+    },
+    {
+      "type": "detail_tab",
+      "name": "Detail tab",
+      "settings": [
+        {
+          "type": "text",
+          "id": "heading",
+          "label": "Heading",
+          "default": "Tab heading"
+        },
+        {
+          "type": "checkbox",
+          "id": "use_product_description",
+          "label": "Use product description as content",
+          "default": false
+        },
+        {
+          "type": "richtext",
+          "id": "content",
+          "label": "Content"
+        },
+        {
+          "type": "page",
+          "id": "page",
+          "label": "Content from page"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Product assignment hero"
+    }
+  ]
+}
+{% endschema %}
